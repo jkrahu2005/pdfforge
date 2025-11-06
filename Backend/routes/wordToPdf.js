@@ -4,11 +4,10 @@ const { uploadWord } = require("../middleware/upload");
 const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
-const convert = require("docx-pdf");
 
 const router = express.Router();
 
-// 📍 WORD → PDF Conversion Route
+// 📍 WORD → PDF Conversion Route (Placeholder)
 router.post("/word-to-pdf", uploadWord.single("word"), async (req, res) => {
   console.log("=== WORD TO PDF REQUEST RECEIVED ===");
 
@@ -23,45 +22,28 @@ router.post("/word-to-pdf", uploadWord.single("word"), async (req, res) => {
     console.log("Word file received:", req.file.originalname);
     console.log("File size:", (req.file.size / 1024 / 1024).toFixed(2), "MB");
 
-    const wordPath = req.file.path;
-    const outputFilename = `converted_${uuidv4()}.pdf`;
-    const pdfPath = path.join(__dirname, "../temp", outputFilename);
+    // Cleanup uploaded file immediately since we can't convert yet
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+      console.log("🧹 Cleaned up uploaded Word file");
+    }
 
-    console.log("Converting DOCX → PDF...");
-
-    // Convert using docx-pdf
-    await new Promise((resolve, reject) => {
-      convert(wordPath, pdfPath, function (err, result) {
-        if (err) reject(err);
-        else resolve(result);
-      });
-    });
-
-    console.log("✅ Conversion successful:", outputFilename);
-
-    const fileSize = fs.statSync(pdfPath).size;
-    console.log(`Generated PDF Size: ${(fileSize / 1024 / 1024).toFixed(2)} MB`);
-
-    // Cleanup uploaded DOCX after conversion
-    fs.unlinkSync(wordPath);
-    console.log("🧹 Cleaned up Word file");
-
-    // Auto-delete PDF after 1 hour
-    setTimeout(() => {
-      if (fs.existsSync(pdfPath)) {
-        fs.unlinkSync(pdfPath);
-        console.log("🧹 Cleaned up PDF:", outputFilename);
-      }
-    }, 3600000);
+    console.log("⚠️ Word to PDF conversion - feature coming soon");
 
     res.json({
       success: true,
-      message: "Word document converted successfully",
-      filename: outputFilename,
-      downloadUrl: `/api/word-to-pdf/download/${outputFilename}`,
-      fileSize: `${(fileSize / 1024 / 1024).toFixed(2)} MB`,
+      message: "Word document received successfully",
+      note: "Word to PDF conversion feature is coming soon. Currently in development.",
       originalName: req.file.originalname,
+      status: "placeholder",
+      plannedFeatures: [
+        "DOCX to PDF conversion",
+        "DOC to PDF conversion",
+        "Batch conversion support",
+        "Format preservation"
+      ]
     });
+
   } catch (error) {
     console.error("❌ ERROR IN WORD TO PDF:", error);
 
@@ -72,37 +54,31 @@ router.post("/word-to-pdf", uploadWord.single("word"), async (req, res) => {
 
     res.status(500).json({
       success: false,
-      error: "Conversion failed",
+      error: "Processing failed",
       message: error.message,
     });
   }
 });
 
-// 📥 Download Endpoint
+// 📥 Download Endpoint (Placeholder)
 router.get("/download/:filename", (req, res) => {
   try {
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, "../temp", filename);
-
+    
     console.log("Download request for:", filename);
 
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        error: "File not found",
-      });
-    }
-
-    const originalName = filename.replace(/^converted_/, "");
-    res.download(filePath, `converted-${originalName}.pdf`, (err) => {
-      if (err) console.error("Download error:", err);
-      else console.log("✅ Download completed:", filename);
+    res.status(503).json({
+      success: false,
+      error: "Service temporarily unavailable",
+      message: "Word to PDF conversion is currently in development. Check back soon!",
+      expectedCompletion: "Coming in next update"
     });
+
   } catch (error) {
     console.error("❌ Download endpoint error:", error);
     res.status(500).json({
       success: false,
-      error: "Download failed",
+      error: "Download service unavailable",
     });
   }
 });
@@ -111,8 +87,14 @@ router.get("/download/:filename", (req, res) => {
 router.get("/health", (req, res) => {
   res.json({
     success: true,
-    message: "WORD to PDF API is running",
+    message: "WORD to PDF API is running (placeholder mode)",
     timestamp: new Date().toISOString(),
+    status: "active_but_limited",
+    features: {
+      fileUpload: "available",
+      conversion: "coming_soon",
+      download: "coming_soon"
+    }
   });
 });
 
