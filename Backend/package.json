@@ -1,0 +1,35 @@
+{
+  "name": "pdfmaster-backend",
+  "version": "1.0.0",
+  "description": "Backend for PDFMaster - PDF conversion tools",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "railway": "node server.js"
+  },
+  "dependencies": {
+    "archiver": "^5.3.2",
+    "cors": "^2.8.0",
+    "express": "^4.18.0",
+    "multer": "^1.4.0",
+    "pdf-lib": "^1.17.1",
+    "sharp": "^0.32.6",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "pdf",
+    "conversion",
+    "express",
+    "nodejs"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
