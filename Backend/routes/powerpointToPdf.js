@@ -1,4 +1,4 @@
-// backend/routes/powerpointToPdf.js - USING SOFFICE DIRECTLY
+// backend/routes/powerpointToPdf.js
 const express = require('express');
 const { uploadPowerpoint } = require('../middleware/upload');
 const fs = require('fs');
@@ -8,6 +8,8 @@ const { exec } = require('child_process');
 const { PDFDocument, rgb } = require('pdf-lib');
 
 const router = express.Router();
+
+console.log('✓ powerpointToPdf route loaded');
 
 // Helper function to check if soffice is available
 const isSofficeAvailable = () => {
@@ -181,7 +183,7 @@ router.post('/powerpoint-to-pdf', uploadPowerpoint.single('powerpoint'), async (
       success: true,
       message: 'Presentation converted to PDF successfully',
       filename: outputFilename,
-      downloadUrl: downloadUrl, // Use the constructed URL
+      downloadUrl: downloadUrl,
       fileSize: fileSize,
       processingTime: `${totalTime}ms`,
       conversionType: conversionMethod,

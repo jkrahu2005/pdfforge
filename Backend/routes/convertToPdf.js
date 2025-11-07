@@ -8,6 +8,8 @@ const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
+console.log('✓ convertToPdf route loaded');
+
 // JPG/Images to PDF
 router.post('/images-to-pdf', uploadImages.array('images', 20), async (req, res) => {
   let tempFiles = [];

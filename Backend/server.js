@@ -81,11 +81,63 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
-app.use('/api/convert', require('./routes/convertToPdf'));
-app.use('/api/pdf-to-jpg', require('./routes/pdfToJpg'));
-app.use('/api/word-to-pdf', require('./routes/wordToPdf'));
-app.use('/api/powerpoint-to-pdf', require('./routes/powerpointToPdf'));
+// Debug: Check if route files exist
+console.log('Checking route files...');
+const routes = {
+  convertToPdf: path.join(__dirname, 'routes/convertToPdf.js'),
+  pdfToJpg: path.join(__dirname, 'routes/pdfToJpg.js'),
+  wordToPdf: path.join(__dirname, 'routes/wordToPdf.js'),
+  powerpointToPdf: path.join(__dirname, 'routes/powerpointToPdf.js')
+};
+
+Object.entries(routes).forEach(([name, routePath]) => {
+  console.log(`${name}: ${fs.existsSync(routePath) ? '✓ EXISTS' : '✗ MISSING'}`);
+});
+
+// Routes with error handling
+try {
+  console.log('Loading routes...');
+  
+  // Mount routes
+  app.use('/api/convert', require('./routes/convertToPdf'));
+  app.use('/api/pdf-to-jpg', require('./routes/pdfToJpg'));
+  app.use('/api/word-to-pdf', require('./routes/wordToPdf'));
+  app.use('/api/powerpoint-to-pdf', require('./routes/powerpointToPdf'));
+  
+  console.log('✓ All routes mounted successfully');
+} catch (error) {
+  console.error('❌ ERROR LOADING ROUTES:', error);
+  console.error('Route loading failed, server will not function properly');
+}
+
+// Debug endpoint to check all registered routes
+app.get('/debug-routes', (req, res) => {
+  const routes = [];
+  
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      // Regular routes
+      routes.push({
+        path: middleware.route.path,
+        methods: Object.keys(middleware.route.methods)
+      });
+    } else if (middleware.name === 'router') {
+      // Router middleware
+      if (middleware.handle.stack) {
+        middleware.handle.stack.forEach((handler) => {
+          if (handler.route) {
+            routes.push({
+              path: middleware.regexp.toString() + handler.route.path,
+              methods: Object.keys(handler.route.methods)
+            });
+          }
+        });
+      }
+    }
+  });
+  
+  res.json({ routes });
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -126,6 +178,7 @@ app.use('*', (req, res) => {
     message: `Route ${req.originalUrl} does not exist`,
     availableEndpoints: [
       '/health',
+      '/debug-routes',
       '/api/convert/images-to-pdf',
       '/api/pdf-to-jpg/pdf-to-jpg',
       '/api/word-to-pdf/word-to-pdf',
@@ -192,6 +245,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 📍 Frontend URL: ${FRONTEND_URL}
 📍 Allowed Origins: ${ALLOWED_ORIGINS.join(', ')}
 📍 Health Check: http://localhost:${PORT}/health
+📍 Debug Routes: http://localhost:${PORT}/debug-routes
 📍 Time: ${new Date().toISOString()}
 📍 Temp Directory: ${fs.existsSync(tempDir) ? '✓ Ready' : '✗ Missing'}
   `);

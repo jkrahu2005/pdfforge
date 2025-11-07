@@ -9,7 +9,9 @@ const archiver = require('archiver');
 
 const router = express.Router();
 
-// PDF to JPG route - COMPLETELY NEW IMPLEMENTATION
+console.log('✓ pdfToJpg route loaded');
+
+// PDF to JPG route
 router.post('/pdf-to-jpg', uploadPdf.single('pdf'), async (req, res) => {
   console.log('=== PDF TO JPG REQUEST RECEIVED ===');
   
@@ -36,7 +38,7 @@ router.post('/pdf-to-jpg', uploadPdf.single('pdf'), async (req, res) => {
       console.log('Created output directory');
     }
 
-    // Create placeholder images manually (bypass any service issues)
+    // Create placeholder images manually
     console.log('Creating placeholder images...');
     
     // Read PDF to get page count using pdf-lib
@@ -153,7 +155,7 @@ router.post('/pdf-to-jpg', uploadPdf.single('pdf'), async (req, res) => {
       success: true,
       message: `PDF converted to ${pageCount} JPG images`,
       filename: zipFilename,
-      downloadUrl: downloadUrl, // Use the constructed URL
+      downloadUrl: downloadUrl,
       pageCount: pageCount,
       fileSize: fileSize
     });

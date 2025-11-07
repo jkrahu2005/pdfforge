@@ -7,6 +7,8 @@ const { v4: uuidv4 } = require("uuid");
 
 const router = express.Router();
 
+console.log('✓ wordToPdf route loaded');
+
 // 📍 WORD → PDF Conversion Route (Placeholder)
 router.post("/word-to-pdf", uploadWord.single("word"), async (req, res) => {
   console.log("=== WORD TO PDF REQUEST RECEIVED ===");
@@ -22,6 +24,10 @@ router.post("/word-to-pdf", uploadWord.single("word"), async (req, res) => {
     console.log("Word file received:", req.file.originalname);
     console.log("File size:", (req.file.size / 1024 / 1024).toFixed(2), "MB");
 
+    // Construct proper download URL for production (placeholder)
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const downloadUrl = `${baseUrl}/api/word-to-pdf/download/placeholder.pdf`;
+
     // Cleanup uploaded file immediately since we can't convert yet
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
@@ -33,6 +39,7 @@ router.post("/word-to-pdf", uploadWord.single("word"), async (req, res) => {
     res.json({
       success: true,
       message: "Word document received successfully",
+      downloadUrl: downloadUrl,
       note: "Word to PDF conversion feature is coming soon. Currently in development.",
       originalName: req.file.originalname,
       status: "placeholder",
