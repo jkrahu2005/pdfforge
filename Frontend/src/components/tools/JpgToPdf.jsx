@@ -15,7 +15,19 @@ const JpgToPdf = () => {
     },
     maxFiles: 20,
     maxSize: 10 * 1024 * 1024, // 10MB
-    onDrop: (acceptedFiles) => {
+    onDrop: (acceptedFiles, rejectedFiles) => {
+      if (rejectedFiles.length > 0) {
+        const rejection = rejectedFiles[0];
+        if (rejection.errors[0].code === 'file-too-large') {
+          setError('File too large. Maximum size is 10MB per file.');
+        } else if (rejection.errors[0].code === 'too-many-files') {
+          setError('Too many files. Maximum 20 files allowed.');
+        } else {
+          setError('Invalid file type. Please upload images only.');
+        }
+        return;
+      }
+      
       setFiles(acceptedFiles);
       setError('');
     }
@@ -39,8 +51,8 @@ const JpgToPdf = () => {
       const result = await uploadFiles(API_ENDPOINTS.IMAGES_TO_PDF, formData);
 
       if (result.success) {
-        // Use the full URL from the backend response
-        setDownloadUrl(`http://localhost:5001${result.downloadUrl}`);
+        // Use the full URL from backend response (no hardcoded localhost)
+        setDownloadUrl(result.downloadUrl);
       } else {
         setError(result.error || 'Conversion failed');
       }
@@ -61,6 +73,33 @@ const JpgToPdf = () => {
     setFiles([]);
     setDownloadUrl('');
     setError('');
+  };
+
+  const handleDownload = async () => {
+    if (!downloadUrl) return;
+    
+    try {
+      const response = await fetch(downloadUrl, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `converted-${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      setError('Download failed: ' + error.message);
+    }
   };
 
   return (
@@ -183,13 +222,12 @@ const JpgToPdf = () => {
                     {files.length} image(s) converted
                   </p>
                   <div className="card-actions justify-center">
-                    <a
-                      href={downloadUrl}
-                      download
+                    <button
+                      onClick={handleDownload}
                       className="btn bg-green-600 hover:bg-green-700 border-green-600 text-white"
                     >
                       📥 Download PDF
-                    </a>
+                    </button>
                     <button
                       onClick={resetConverter}
                       className="btn btn-outline border-gray-400 text-gray-700 hover:bg-gray-100"

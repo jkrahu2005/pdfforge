@@ -23,10 +23,10 @@ if (!fs.existsSync(tempDir)) {
 console.log('Environment:', NODE_ENV);
 console.log('Allowed origins:', ALLOWED_ORIGINS);
 
-// CORS configuration - DEVELOPMENT FRIENDLY
+// CORS configuration - PRODUCTION READY
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin
+    // Allow requests with no origin (mobile apps, postman, etc.)
     if (!origin) return callback(null, true);
     
     // Check against allowed origins
@@ -37,7 +37,10 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Disposition']
 };
 
 // Apply CORS middleware
@@ -49,11 +52,32 @@ app.options('*', cors(corsOptions));
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use(express.static('temp'));
+app.use('/temp', express.static(path.join(__dirname, 'temp'), {
+  setHeaders: (res, path) => {
+    // Set proper headers for file downloads
+    if (path.endsWith('.pdf')) {
+      res.setHeader('Content-Type', 'application/pdf');
+    } else if (path.endsWith('.zip')) {
+      res.setHeader('Content-Type', 'application/zip');
+    }
+    res.setHeader('Cache-Control', 'no-cache');
+  }
+}));
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.headers.origin || 'none'}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.headers.origin || 'none'} - IP: ${req.ip}`);
+  next();
+});
+
+// Security headers middleware
+app.use((req, res, next) => {
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  
   next();
 });
 
@@ -70,7 +94,10 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: NODE_ENV,
     version: '1.0.0',
-    allowedOrigins: ALLOWED_ORIGINS
+    allowedOrigins: ALLOWED_ORIGINS,
+    tempDir: fs.existsSync(tempDir) ? 'exists' : 'missing',
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
   });
 });
 
@@ -86,7 +113,8 @@ app.get('/', (req, res) => {
       pdfToJpg: '/api/pdf-to-jpg',
       wordToPdf: '/api/word-to-pdf',
       powerpointToPdf: '/api/powerpoint-to-pdf'
-    }
+    },
+    documentation: 'See /health for API status'
   });
 });
 
@@ -95,7 +123,14 @@ app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
     error: 'Endpoint not found',
-    message: `Route ${req.originalUrl} does not exist`
+    message: `Route ${req.originalUrl} does not exist`,
+    availableEndpoints: [
+      '/health',
+      '/api/convert/images-to-pdf',
+      '/api/pdf-to-jpg/pdf-to-jpg',
+      '/api/word-to-pdf/word-to-pdf',
+      '/api/powerpoint-to-pdf/powerpoint-to-pdf'
+    ]
   });
 });
 
@@ -118,7 +153,7 @@ app.use((err, req, res, next) => {
     return res.status(413).json({
       success: false,
       error: 'File too large',
-      message: 'File size exceeds the allowed limit'
+      message: 'File size exceeds the allowed limit (50MB)'
     });
   }
   
@@ -127,6 +162,15 @@ app.use((err, req, res, next) => {
       success: false,
       error: 'Unexpected field',
       message: 'Invalid file field name'
+    });
+  }
+
+  // File system errors
+  if (err.code === 'ENOENT') {
+    return res.status(404).json({
+      success: false,
+      error: 'File not found',
+      message: 'The requested file does not exist or has expired'
     });
   }
 
@@ -140,7 +184,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`
 🚀 PDFMaster Backend Server Started!
 📍 Environment: ${NODE_ENV}
@@ -149,16 +193,54 @@ app.listen(PORT, () => {
 📍 Allowed Origins: ${ALLOWED_ORIGINS.join(', ')}
 📍 Health Check: http://localhost:${PORT}/health
 📍 Time: ${new Date().toISOString()}
+📍 Temp Directory: ${fs.existsSync(tempDir) ? '✓ Ready' : '✗ Missing'}
   `);
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  process.exit(0);
+const gracefulShutdown = (signal) => {
+  console.log(`\n${signal} received, shutting down gracefully...`);
+  
+  server.close((err) => {
+    if (err) {
+      console.error('Error during shutdown:', err);
+      process.exit(1);
+    }
+    
+    console.log('Server closed successfully.');
+    
+    // Cleanup temp directory on shutdown in production
+    if (NODE_ENV === 'production') {
+      try {
+        if (fs.existsSync(tempDir)) {
+          fs.rmSync(tempDir, { recursive: true, force: true });
+          console.log('Temporary files cleaned up.');
+        }
+      } catch (cleanupError) {
+        console.error('Error cleaning up temp directory:', cleanupError);
+      }
+    }
+    
+    process.exit(0);
+  });
+
+  // Force close after 10 seconds
+  setTimeout(() => {
+    console.error('Forcing shutdown after timeout...');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
 });
 
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
-  process.exit(0);
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });

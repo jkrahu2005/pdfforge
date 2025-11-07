@@ -123,6 +123,10 @@ router.post('/pdf-to-jpg', uploadPdf.single('pdf'), async (req, res) => {
     const fileSize = fs.statSync(zipPath).size;
     console.log(`ZIP file size: ${fileSize} bytes`);
 
+    // Construct proper download URL for production
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const downloadUrl = `${baseUrl}/api/pdf-to-jpg/download/${zipFilename}`;
+
     // Cleanup temporary files
     console.log('Cleaning up temporary files...');
     fs.unlinkSync(pdfPath); // Delete uploaded PDF
@@ -149,7 +153,7 @@ router.post('/pdf-to-jpg', uploadPdf.single('pdf'), async (req, res) => {
       success: true,
       message: `PDF converted to ${pageCount} JPG images`,
       filename: zipFilename,
-      downloadUrl: `/api/pdf-to-jpg/download/${zipFilename}`,
+      downloadUrl: downloadUrl, // Use the constructed URL
       pageCount: pageCount,
       fileSize: fileSize
     });
@@ -175,6 +179,15 @@ router.post('/pdf-to-jpg', uploadPdf.single('pdf'), async (req, res) => {
 router.get('/download/:filename', (req, res) => {
   try {
     const filename = req.params.filename;
+    
+    // Security check: prevent directory traversal
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid filename'
+      });
+    }
+    
     const filePath = path.join(__dirname, '../temp', filename);
     
     console.log('Download request for:', filename);
@@ -182,33 +195,49 @@ router.get('/download/:filename', (req, res) => {
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
-        error: 'File not found'
+        error: 'File not found or expired'
       });
     }
 
-    res.download(filePath, `pdf-to-jpg-${Date.now()}.zip`, (err) => {
-      if (err) {
-        console.error('Download error:', err);
-      } else {
-        console.log('Download completed:', filename);
-      }
+    // Set proper headers for ZIP download
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="pdf-to-jpg-${Date.now()}.zip"`);
+    res.setHeader('Cache-Control', 'no-cache');
+
+    // Stream the file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    fileStream.on('error', (error) => {
+      console.error('File stream error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'File download failed'
+      });
+    });
+
+    fileStream.on('end', () => {
+      console.log('Download completed:', filename);
     });
 
   } catch (error) {
     console.error('Download endpoint error:', error);
     res.status(500).json({
       success: false,
-      error: 'Download failed'
+      error: 'Download failed',
+      message: error.message
     });
   }
 });
 
 // Health check
 router.get('/health', (req, res) => {
+  const tempDir = path.join(__dirname, '../temp');
   res.json({ 
     success: true, 
     message: 'PDF to JPG API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    tempDirExists: fs.existsSync(tempDir)
   });
 });
 

@@ -166,6 +166,10 @@ router.post('/powerpoint-to-pdf', uploadPowerpoint.single('powerpoint'), async (
 
     console.log(`✅ PDF delivered in ${totalTime}ms using: ${conversionMethod}`);
 
+    // Construct proper download URL for production
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const downloadUrl = `${baseUrl}/api/powerpoint-to-pdf/download/${outputFilename}`;
+
     // Cleanup
     fs.unlinkSync(pptPath);
     
@@ -177,7 +181,7 @@ router.post('/powerpoint-to-pdf', uploadPowerpoint.single('powerpoint'), async (
       success: true,
       message: 'Presentation converted to PDF successfully',
       filename: outputFilename,
-      downloadUrl: `/api/powerpoint-to-pdf/download/${outputFilename}`,
+      downloadUrl: downloadUrl, // Use the constructed URL
       fileSize: fileSize,
       processingTime: `${totalTime}ms`,
       conversionType: conversionMethod,
@@ -201,26 +205,51 @@ router.post('/powerpoint-to-pdf', uploadPowerpoint.single('powerpoint'), async (
   }
 });
 
-// Download endpoint (keep the same)
+// Download endpoint
 router.get('/download/:filename', (req, res) => {
   try {
     const filename = req.params.filename;
+    
+    // Security check: prevent directory traversal
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid filename'
+      });
+    }
+    
     const filePath = path.join(__dirname, '../temp', filename);
     
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
-        error: 'File not found'
+        error: 'File not found or expired'
       });
     }
 
-    const originalName = filename.replace(/^converted_/, '');
-    res.download(filePath, `converted-${originalName}.pdf`);
+    // Set proper headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="converted-${Date.now()}.pdf"`);
+    res.setHeader('Cache-Control', 'no-cache');
+
+    // Stream the file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    fileStream.on('error', (error) => {
+      console.error('File stream error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'File download failed'
+      });
+    });
 
   } catch (error) {
+    console.error('Download endpoint error:', error);
     res.status(500).json({
       success: false,
-      error: 'Download failed'
+      error: 'Download failed',
+      message: error.message
     });
   }
 });
@@ -228,12 +257,14 @@ router.get('/download/:filename', (req, res) => {
 // Health check with soffice status
 router.get('/health', async (req, res) => {
   const sofficeAvailable = await isSofficeAvailable();
+  const tempDir = path.join(__dirname, '../temp');
   
   res.json({ 
     success: true, 
     message: 'PowerPoint to PDF API is running',
     sofficeAvailable: sofficeAvailable,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    tempDirExists: fs.existsSync(tempDir)
   });
 });
 

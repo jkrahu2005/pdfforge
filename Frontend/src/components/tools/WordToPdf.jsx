@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { API_ENDPOINTS, uploadFiles } from '../../utils/api';
 
-
 const WordToPdf = () => {
   const [file, setFile] = useState(null);
   const [isConverting, setIsConverting] = useState(false);
@@ -23,37 +22,65 @@ const WordToPdf = () => {
     }
   });
 
- const convertToPdf = async () => {
-  if (!file) {
-    setError('Please select a Word document');
-    return;
-  }
-
-  setIsConverting(true);
-  setError('');
-
-  const formData = new FormData();
-  formData.append('word', file);
-
-  try {
-    const result = await uploadFiles(API_ENDPOINTS.WORD_TO_PDF, formData);
-
-    if (result.success) {
-      setDownloadUrl(`http://localhost:5001${result.downloadUrl}`);
-    } else {
-      setError(result.error || 'Conversion failed');
+  const convertToPdf = async () => {
+    if (!file) {
+      setError('Please select a Word document');
+      return;
     }
-  } catch (error) {
-    setError('Network error: ' + error.message);
-  } finally {
-    setIsConverting(false);
-  }
-};
+
+    setIsConverting(true);
+    setError('');
+
+    const formData = new FormData();
+    formData.append('word', file);
+
+    try {
+      const result = await uploadFiles(API_ENDPOINTS.WORD_TO_PDF, formData);
+
+      if (result.success) {
+        // Use the full URL from backend response (no hardcoded localhost)
+        setDownloadUrl(result.downloadUrl);
+      } else {
+        setError(result.error || 'Conversion failed');
+      }
+    } catch (error) {
+      setError('Network error: ' + error.message);
+    } finally {
+      setIsConverting(false);
+    }
+  };
 
   const resetConverter = () => {
     setFile(null);
     setDownloadUrl('');
     setError('');
+  };
+
+  const handleDownload = async () => {
+    if (!downloadUrl) return;
+    
+    try {
+      const response = await fetch(downloadUrl, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `converted-${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      setError('Download failed: ' + error.message);
+    }
   };
 
   return (
@@ -169,13 +196,12 @@ const WordToPdf = () => {
                     Ready for download
                   </p>
                   <div className="card-actions justify-center">
-                    <a
-                      href={downloadUrl}
-                      download
+                    <button
+                      onClick={handleDownload}
                       className="btn bg-green-600 hover:bg-green-700 border-green-600 text-white"
                     >
                       📥 Download PDF
-                    </a>
+                    </button>
                     <button
                       onClick={resetConverter}
                       className="btn btn-outline border-gray-400 text-gray-700 hover:bg-gray-100"
