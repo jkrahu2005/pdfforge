@@ -170,7 +170,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// 404 handler
+// 404 handler - UPDATED with correct endpoint paths
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -182,7 +182,7 @@ app.use('*', (req, res) => {
       '/api/convert/images-to-pdf',
       '/api/pdf-to-jpg/pdf-to-jpg',
       '/api/word-to-pdf/word-to-pdf',
-      '/api/powerpoint-to-pdf/powerpoint-to-pdf'
+      '/api/powerpoint-to-pdf'  // CHANGED: removed duplicate part
     ]
   });
 });
@@ -248,6 +248,15 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 📍 Debug Routes: http://localhost:${PORT}/debug-routes
 📍 Time: ${new Date().toISOString()}
 📍 Temp Directory: ${fs.existsSync(tempDir) ? '✓ Ready' : '✗ Missing'}
+
+📋 AVAILABLE ENDPOINTS:
+  • POST /api/convert/images-to-pdf
+  • POST /api/pdf-to-jpg/pdf-to-jpg  
+  • POST /api/word-to-pdf/word-to-pdf
+  • POST /api/powerpoint-to-pdf
+  • GET  /api/powerpoint-to-pdf/download/:filename
+  • GET  /health
+  • GET  /debug-routes
   `);
 });
 

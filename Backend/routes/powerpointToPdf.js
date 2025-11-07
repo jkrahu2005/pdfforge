@@ -55,8 +55,8 @@ const convertWithSoffice = (inputPath, outputPath) => {
   });
 };
 
-// PowerPoint to PDF route using soffice
-router.post('/powerpoint-to-pdf', uploadPowerpoint.single('powerpoint'), async (req, res) => {
+// PowerPoint to PDF route using soffice - FIXED: changed from '/powerpoint-to-pdf' to '/'
+router.post('/', uploadPowerpoint.single('powerpoint'), async (req, res) => {
   console.log('=== POWERPOINT TO PDF REQUEST RECEIVED ===');
   
   const startTime = Date.now();
