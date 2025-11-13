@@ -4,8 +4,7 @@ const { uploadPowerpoint } = require('../middleware/upload');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const { PDFDocument, rgb } = require('pdf-lib');
-const { StandardFonts } = require('pdf-lib');
+const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 
 const router = express.Router();
 
@@ -60,16 +59,16 @@ router.post('/', uploadPowerpoint.single('powerpoint'), async (req, res) => {
       x: 50, y: height - 210, size: 12, color: rgb(0.3, 0.3, 0.3),
     });
     
-    // Conversion notice
-    page.drawText('✓ Format: Professional PDF', {
+    // ✅ FIXED: Conversion notice - removed checkmark symbols
+    page.drawText('Professional PDF Format', {
       x: 50, y: height - 260, size: 12, color: rgb(0, 0.6, 0),
     });
     
-    page.drawText('✓ Quality: Industry Standard', {
+    page.drawText('Industry Standard Quality', {
       x: 50, y: height - 285, size: 12, color: rgb(0, 0.6, 0),
     });
     
-    page.drawText('✓ Compatibility: All PDF Readers', {
+    page.drawText('Compatible with All PDF Readers', {
       x: 50, y: height - 310, size: 12, color: rgb(0, 0.6, 0),
     });
     
