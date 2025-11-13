@@ -6,7 +6,7 @@ const path = require('path');
 
 class PdfService {
   
-  // Convert images to PDF (existing method)
+  // Convert images to PDF
   async imagesToPdf(imagePaths, options = {}) {
     try {
       const pdfDoc = await PDFDocument.create();
@@ -36,11 +36,8 @@ class PdfService {
     }
   }
 
-  // Convert single image to PDF
- // backend/services/pdfService.js - Update ONLY the convertPdfToImages method
-// backend/services/pdfService.js - COMPLETE REPLACEMENT for convertPdfToImages
-async convertPdfToImages(pdfPath, outputDir, options = {}) {
-  return new Promise(async (resolve, reject) => {
+  // ✅ FIXED: Single convertPdfToImages method (removed duplicate)
+  async convertPdfToImages(pdfPath, outputDir, options = {}) {
     try {
       console.log('Starting PDF to JPG conversion...');
       
@@ -92,60 +89,10 @@ async convertPdfToImages(pdfPath, outputDir, options = {}) {
       // Wait for all images to be created
       await Promise.all(promises);
       console.log(`All ${imagePaths.length} images created successfully`);
-      resolve(imagePaths);
-      
-    } catch (error) {
-      console.error('Error in PDF to JPG conversion:', error);
-      reject(error);
-    }
-  });
-}
-
-  // PDF to Images conversion with placeholder implementation
-  async convertPdfToImages(pdfPath, outputDir, options = {}) {
-    try {
-      // Ensure output directory exists
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-      }
-
-      // Read PDF to get page count
-      const pdfBytes = fs.readFileSync(pdfPath);
-      const pdfDoc = await PDFDocument.load(pdfBytes);
-      const pageCount = pdfDoc.getPageCount();
-      
-      const imagePaths = [];
-      
-      // Create placeholder images for each page
-      for (let i = 0; i < pageCount; i++) {
-        const imagePath = path.join(outputDir, `page_${i + 1}.jpg`);
-        
-        // Create a placeholder image using sharp
-        const placeholderSvg = `
-          <svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
-            <rect width="100%" height="100%" fill="#f0f0f0"/>
-            <text x="50%" y="40%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="24" fill="#333">
-              Page ${i + 1} of ${pageCount}
-            </text>
-            <text x="50%" y="50%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="18" fill="#666">
-              PDF to JPG Conversion
-            </text>
-            <text x="50%" y="60%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="14" fill="#999">
-              Placeholder - Actual conversion requires setup
-            </text>
-          </svg>
-        `;
-        
-        await sharp(Buffer.from(placeholderSvg))
-          .jpeg({ quality: 80 })
-          .toFile(imagePath);
-        
-        imagePaths.push(imagePath);
-      }
-      
       return imagePaths;
       
     } catch (error) {
+      console.error('Error in PDF to JPG conversion:', error);
       throw new Error(`PDF to image conversion failed: ${error.message}`);
     }
   }
