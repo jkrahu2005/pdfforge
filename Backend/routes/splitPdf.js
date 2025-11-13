@@ -214,6 +214,9 @@ router.post('/split-pdf', uploadSinglePdf.single('pdf'), async (req, res) => {
 // =====================================================
 // 📥 Download Endpoint for ZIP file
 // =====================================================
+// =====================================================
+// 📥 Download Endpoint for ZIP file - FIXED CORS
+// =====================================================
 router.get('/download/:filename', (req, res) => {
   try {
     const filename = req.params.filename;
@@ -237,18 +240,13 @@ router.get('/download/:filename', (req, res) => {
       });
     }
 
-    // ✅ Add CORS headers (important)
-    res.setHeader('Access-Control-Allow-Origin', '*'); // or your frontend URL
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    // ✅ FIXED: Use specific origin instead of wildcard
+    res.header('Access-Control-Allow-Origin', 'https://pdfmaster-18.netlify.app');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-    // ✅ Handle preflight request
-    if (req.method === 'OPTIONS') {
-      return res.sendStatus(200);
-    }
-
-    // ✅ Set headers for file download
+    // Set headers for file download
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="split-pdf-${Date.now()}.zip"`);
     res.setHeader('Cache-Control', 'no-cache');
