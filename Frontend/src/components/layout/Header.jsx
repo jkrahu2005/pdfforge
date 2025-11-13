@@ -24,9 +24,9 @@ const Header = () => {
                   <li><Link to="/tools/word-to-pdf" className="text-gray-700 hover:text-blue-600">WORD to PDF</Link></li>
                    <li><Link to="/tools/powerpoint-to-pdf" className="text-gray-700 hover:text-blue-600">PowerPoint to PDF</Link></li>
                   {/* Add more tools as we build them */}
-                  <li><a className="text-gray-500 hover:text-gray-500 cursor-not-allowed">Compress PDF</a></li>
-                  <li><a className="text-gray-500 hover:text-gray-500 cursor-not-allowed">Merge PDF</a></li>
-                  <li><a className="text-gray-500 hover:text-gray-500 cursor-not-allowed">Split PDF</a></li>
+                  <li><Link to="/tools/remove-pages" className="text-gray-700 hover:text-blue-600">Remove Pages</Link></li>
+                 <li><Link to="/tools/merge-pdf" className="text-gray-700 hover:text-blue-600">Merge PDF</Link></li>
+                 <li><Link to="/tools/split-pdf" className="text-gray-700 hover:text-blue-600">Split PDF</Link></li>
                 </ul>
               </details>
             </li>

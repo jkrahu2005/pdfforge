@@ -168,7 +168,7 @@ router.post('/', uploadPowerpoint.single('powerpoint'), async (req, res) => {
 
     console.log(`✅ PDF delivered in ${totalTime}ms using: ${conversionMethod}`);
 
-    // Construct proper download URL for production
+    // Construct proper download URL
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const downloadUrl = `${baseUrl}/api/powerpoint-to-pdf/download/${outputFilename}`;
 

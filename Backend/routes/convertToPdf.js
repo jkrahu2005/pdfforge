@@ -37,7 +37,7 @@ router.post('/images-to-pdf', uploadImages.array('images', 20), async (req, res)
     fs.writeFileSync(outputPath, pdfBytes);
     tempFiles.push(outputPath);
 
-    // Construct proper download URL for production
+    // Construct proper download URL
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const downloadUrl = `${baseUrl}/api/convert/download/${outputFilename}`;
 

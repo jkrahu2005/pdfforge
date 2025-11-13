@@ -3,23 +3,22 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-
-// Environment-based configuration
+// ✅ Use environment variables
 const FILE_SIZE_LIMIT = process.env.FILE_SIZE_LIMIT || '50MB';
-const UPLOAD_LIMIT = process.env.UPLOAD_LIMIT || 20;
+const UPLOAD_LIMIT = parseInt(process.env.UPLOAD_LIMIT) || 20;
 
-// Helper to parse size string (e.g., "50MB" to bytes)
+// Helper to parse size string
 const parseSize = (sizeStr) => {
   const units = { B: 1, KB: 1024, MB: 1024 * 1024, GB: 1024 * 1024 * 1024 };
   const match = sizeStr.match(/^(\d+)([BKMGT]?B)$/i);
-  if (!match) return 50 * 1024 * 1024; // Default 50MB
+  if (!match) return 50 * 1024 * 1024;
   
   const [, value, unit] = match;
   return parseInt(value) * (units[unit.toUpperCase()] || 1);
 };
 
 const maxFileSize = parseSize(FILE_SIZE_LIMIT);
-const maxFiles = parseInt(UPLOAD_LIMIT);
+const maxFiles = UPLOAD_LIMIT;
 
 console.log(`Upload configuration - Max file size: ${FILE_SIZE_LIMIT}, Max files: ${maxFiles}`);
 
@@ -38,7 +37,7 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter for images (used in JPG to PDF)
+// File filter for images
 const imageFileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
@@ -47,7 +46,7 @@ const imageFileFilter = (req, file, cb) => {
   }
 };
 
-// File filter for PDFs (used in PDF to JPG)
+// File filter for PDFs
 const pdfFileFilter = (req, file, cb) => {
   if (file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf')) {
     cb(null, true);
@@ -56,7 +55,7 @@ const pdfFileFilter = (req, file, cb) => {
   }
 };
 
-// File filter for Word documents (used in WORD to PDF)
+// File filter for Word documents
 const wordFileFilter = (req, file, cb) => {
   const allowedTypes = [
     'application/msword',
@@ -75,7 +74,7 @@ const wordFileFilter = (req, file, cb) => {
   }
 };
 
-// File filter for PowerPoint documents (used in PPT to PDF)
+// File filter for PowerPoint documents
 const powerpointFileFilter = (req, file, cb) => {
   const allowedTypes = [
     'application/vnd.ms-powerpoint',
@@ -94,7 +93,7 @@ const powerpointFileFilter = (req, file, cb) => {
   }
 };
 
-// Create different upload middlewares for different file types
+// Create different upload middlewares
 const uploadImages = multer({
   storage: storage,
   limits: {
@@ -108,7 +107,7 @@ const uploadPdf = multer({
   storage: storage,
   limits: {
     fileSize: maxFileSize,
-    files: 1 // Only 1 PDF file
+    files: 1
   },
   fileFilter: pdfFileFilter
 });
@@ -117,7 +116,7 @@ const uploadWord = multer({
   storage: storage,
   limits: {
     fileSize: maxFileSize,
-    files: 1 // Only 1 Word file
+    files: 1
   },
   fileFilter: wordFileFilter
 });
@@ -126,7 +125,7 @@ const uploadPowerpoint = multer({
   storage: storage,
   limits: {
     fileSize: maxFileSize,
-    files: 1 // Only 1 PowerPoint file
+    files: 1
   },
   fileFilter: powerpointFileFilter
 });

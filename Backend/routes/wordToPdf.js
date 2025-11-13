@@ -10,7 +10,7 @@ const router = express.Router();
 console.log('✓ wordToPdf route loaded');
 
 // 📍 WORD → PDF Conversion Route (Placeholder)
-router.post("/word-to-pdf", uploadWord.single("word"), async (req, res) => {
+router.post("/", uploadWord.single("word"), async (req, res) => {  // CHANGED: removed "word-to-pdf" from path
   console.log("=== WORD TO PDF REQUEST RECEIVED ===");
 
   try {
@@ -24,7 +24,7 @@ router.post("/word-to-pdf", uploadWord.single("word"), async (req, res) => {
     console.log("Word file received:", req.file.originalname);
     console.log("File size:", (req.file.size / 1024 / 1024).toFixed(2), "MB");
 
-    // Construct proper download URL for production (placeholder)
+    // Construct proper download URL
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const downloadUrl = `${baseUrl}/api/word-to-pdf/download/placeholder.pdf`;
 
@@ -105,4 +105,4 @@ router.get("/health", (req, res) => {
   });
 });
 
-module.exports = router;
+module.exports = router;  // Ensure this exports the router

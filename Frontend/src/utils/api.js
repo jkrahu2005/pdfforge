@@ -1,14 +1,20 @@
 // frontend/src/utils/api.js
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
+// Local configuration - removed environment variables
+const API_BASE_URL = "http://localhost:5001";
 
 export const API_ENDPOINTS = {
   // Convert to PDF
   IMAGES_TO_PDF: `${API_BASE_URL}/api/convert/images-to-pdf`,
-  WORD_TO_PDF: `${API_BASE_URL}/api/word-to-pdf/word-to-pdf`,
-  POWERPOINT_TO_PDF: `${API_BASE_URL}/api/powerpoint-to-pdf`, // CHANGED: removed duplicate part
+  WORD_TO_PDF: `${API_BASE_URL}/api/word-to-pdf`,
+  POWERPOINT_TO_PDF: `${API_BASE_URL}/api/powerpoint-to-pdf`,
   
   // Convert from PDF
-  PDF_TO_JPG: `${API_BASE_URL}/api/pdf-to-jpg/pdf-to-jpg`,
+  PDF_TO_JPG: `${API_BASE_URL}/api/pdf-to-jpg`,
+  
+  // Organize PDF
+  MERGE_PDF: `${API_BASE_URL}/api/merge-pdf/merge-pdf`,
+  REMOVE_PAGES: `${API_BASE_URL}/api/remove-pages/remove-pages`,
+  SPLIT_PDF: `${API_BASE_URL}/api/split-pdf/split-pdf`,
   
   // Health check
   HEALTH: `${API_BASE_URL}/health`
@@ -125,6 +131,40 @@ export const api = {
     const formData = new FormData();
     formData.append('pdf', file);
     return await uploadFiles(API_ENDPOINTS.PDF_TO_JPG, formData);
+  },
+
+  // Merge PDF
+  mergePdfs: async (files) => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('pdfs', file);
+    });
+    return await uploadFiles(API_ENDPOINTS.MERGE_PDF, formData);
+  },
+
+  // Remove Pages
+  removePages: async (file, pages) => {
+    const formData = new FormData();
+    formData.append('pdf', file);
+    formData.append('pages', pages);
+    return await uploadFiles(API_ENDPOINTS.REMOVE_PAGES, formData);
+  },
+
+  // Split PDF
+  splitPdf: async (file, splitType, splitPoints = null, pageRanges = null) => {
+    const formData = new FormData();
+    formData.append('pdf', file);
+    formData.append('splitType', splitType);
+    
+    if (splitPoints) {
+      formData.append('splitPoints', splitPoints);
+    }
+    
+    if (pageRanges) {
+      formData.append('pageRanges', pageRanges);
+    }
+    
+    return await uploadFiles(API_ENDPOINTS.SPLIT_PDF, formData);
   },
 
   // Download file

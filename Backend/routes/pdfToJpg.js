@@ -125,7 +125,7 @@ router.post('/pdf-to-jpg', uploadPdf.single('pdf'), async (req, res) => {
     const fileSize = fs.statSync(zipPath).size;
     console.log(`ZIP file size: ${fileSize} bytes`);
 
-    // Construct proper download URL for production
+    // Construct proper download URL
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const downloadUrl = `${baseUrl}/api/pdf-to-jpg/download/${zipFilename}`;
 
