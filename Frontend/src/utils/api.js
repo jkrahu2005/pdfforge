@@ -1,6 +1,6 @@
 // frontend/src/utils/api.js
 // ✅ CHANGED: Updated to live backend URL
-const API_BASE_URL = "https://pdfmaster-backend-ao3x.onrender.com";
+const API_BASE_URL ='https://pdfmaster-backend-ao3x.onrender.com'
 
 export const API_ENDPOINTS = {
   // Convert to PDF
@@ -40,42 +40,22 @@ export const uploadFiles = async (endpoint, formData) => {
 };
 
 // Helper function to download converted files
+// ✅ NEW VERSION (fixes CORS):
 export const downloadFile = async (downloadUrl) => {
   try {
-    const response = await fetch(downloadUrl, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Download failed! status: ${response.status}`);
-    }
-
-    // Get the blob and create download link
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    
-    // Extract filename from Content-Disposition header or use timestamp
-    const contentDisposition = response.headers.get('Content-Disposition');
-    let filename = `converted-${Date.now()}.pdf`;
-    
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-      if (filenameMatch) {
-        filename = filenameMatch[1];
-      }
+    // ✅ FORCE HTTPS - More aggressive fix
+    let secureUrl = downloadUrl;
+    if (downloadUrl.startsWith('http://')) {
+      secureUrl = downloadUrl.replace('http://', 'https://');
+    } else if (!downloadUrl.startsWith('https://')) {
+      // If no protocol, add https
+      secureUrl = 'https://' + downloadUrl;
     }
     
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    console.log('Opening download URL:', secureUrl);
+    window.open(secureUrl, '_blank');
     
-    return { success: true, filename };
+    return { success: true, filename: 'downloaded-file.pdf' };
   } catch (error) {
     console.error('Download failed:', error);
     throw error;
