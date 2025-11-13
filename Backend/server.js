@@ -12,7 +12,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS ? 
   process.env.ALLOWED_ORIGINS.split(',') : 
-  ['http://localhost:5173', 'http://localhost:3000'];
+  ['http://localhost:5173', 'http://localhost:3000','http://localhost:5174'];
 const FILE_SIZE_LIMIT = process.env.FILE_SIZE_LIMIT || '50MB';
 const UPLOAD_LIMIT = parseInt(process.env.UPLOAD_LIMIT) || 20;
 
