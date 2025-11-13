@@ -2,6 +2,14 @@
 // ✅ CHANGED: Updated to live backend URL
 const API_BASE_URL ='https://pdfmaster-backend-ao3x.onrender.com'
 
+// ✅ HTTPS Helper function
+const forceHttps = (url) => {
+  if (url && url.startsWith('http://')) {
+    return url.replace('http://', 'https://');
+  }
+  return url;
+};
+
 export const API_ENDPOINTS = {
   // Convert to PDF
   IMAGES_TO_PDF: `${API_BASE_URL}/api/convert/images-to-pdf`,
@@ -32,7 +40,14 @@ export const uploadFiles = async (endpoint, formData) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+    
+    // ✅ FIX: Convert any download URLs to HTTPS in the response
+    if (result.downloadUrl) {
+      result.downloadUrl = forceHttps(result.downloadUrl);
+    }
+    
+    return result;
   } catch (error) {
     console.error('API request failed:', error);
     throw error;
@@ -87,14 +102,19 @@ export const api = {
   convertPowerpointToPdf: async (file) => {
     const formData = new FormData();
     formData.append('powerpoint', file);
-    return await uploadFiles(API_ENDPOINTS.POWERPOINT_TO_PDF, formData);
+    const result = await uploadFiles(API_ENDPOINTS.POWERPOINT_TO_PDF, formData);
+    // ✅ Double ensure HTTPS
+    result.downloadUrl = forceHttps(result.downloadUrl);
+    return result;
   },
 
   // Word to PDF
   convertWordToPdf: async (file) => {
     const formData = new FormData();
     formData.append('word', file);
-    return await uploadFiles(API_ENDPOINTS.WORD_TO_PDF, formData);
+    const result = await uploadFiles(API_ENDPOINTS.WORD_TO_PDF, formData);
+    result.downloadUrl = forceHttps(result.downloadUrl);
+    return result;
   },
 
   // Images to PDF
@@ -103,14 +123,18 @@ export const api = {
     files.forEach(file => {
       formData.append('images', file);
     });
-    return await uploadFiles(API_ENDPOINTS.IMAGES_TO_PDF, formData);
+    const result = await uploadFiles(API_ENDPOINTS.IMAGES_TO_PDF, formData);
+    result.downloadUrl = forceHttps(result.downloadUrl);
+    return result;
   },
 
   // PDF to JPG
   convertPdfToJpg: async (file) => {
     const formData = new FormData();
     formData.append('pdf', file);
-    return await uploadFiles(API_ENDPOINTS.PDF_TO_JPG, formData);
+    const result = await uploadFiles(API_ENDPOINTS.PDF_TO_JPG, formData);
+    result.downloadUrl = forceHttps(result.downloadUrl);
+    return result;
   },
 
   // Merge PDF
@@ -119,7 +143,9 @@ export const api = {
     files.forEach(file => {
       formData.append('pdfs', file);
     });
-    return await uploadFiles(API_ENDPOINTS.MERGE_PDF, formData);
+    const result = await uploadFiles(API_ENDPOINTS.MERGE_PDF, formData);
+    result.downloadUrl = forceHttps(result.downloadUrl);
+    return result;
   },
 
   // Remove Pages
@@ -127,7 +153,9 @@ export const api = {
     const formData = new FormData();
     formData.append('pdf', file);
     formData.append('pages', pages);
-    return await uploadFiles(API_ENDPOINTS.REMOVE_PAGES, formData);
+    const result = await uploadFiles(API_ENDPOINTS.REMOVE_PAGES, formData);
+    result.downloadUrl = forceHttps(result.downloadUrl);
+    return result;
   },
 
   // Split PDF
@@ -144,7 +172,9 @@ export const api = {
       formData.append('pageRanges', pageRanges);
     }
     
-    return await uploadFiles(API_ENDPOINTS.SPLIT_PDF, formData);
+    const result = await uploadFiles(API_ENDPOINTS.SPLIT_PDF, formData);
+    result.downloadUrl = forceHttps(result.downloadUrl);
+    return result;
   },
 
   // Download file
