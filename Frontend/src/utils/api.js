@@ -1,6 +1,6 @@
 // frontend/src/utils/api.js
-// Local configuration - removed environment variables
-const API_BASE_URL = "http://localhost:5001";
+// ✅ CHANGED: Updated to live backend URL
+const API_BASE_URL = "https://pdfmaster-backend-ao3x.onrender.com";
 
 export const API_ENDPOINTS = {
   // Convert to PDF

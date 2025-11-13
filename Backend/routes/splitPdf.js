@@ -237,6 +237,18 @@ router.get('/download/:filename', (req, res) => {
       });
     }
 
+    // ✅ Add CORS headers (important)
+    res.setHeader('Access-Control-Allow-Origin', '*'); // or your frontend URL
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+    // ✅ Handle preflight request
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+
+    // ✅ Set headers for file download
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="split-pdf-${Date.now()}.zip"`);
     res.setHeader('Cache-Control', 'no-cache');
@@ -264,6 +276,7 @@ router.get('/download/:filename', (req, res) => {
     });
   }
 });
+
 
 // =====================================================
 // 🩺 Health Check Endpoint
